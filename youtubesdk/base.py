@@ -28,17 +28,17 @@ class Connection(object):
 
         self.combined_search_ids = []
         self.combined_video_info = []
-        self.api_units = 0
+        self._api_units = 0
 
 
     def _get_request(self, endpoint, params, cost):
-        self.api_units = self.api_units + cost
-        print('units used till now is ', self.api_units)
+        self._api_units = self._api_units + cost
 
         params['key'] = self.api_key
         params['maxResults'] = constants.MAX_RESULTS
 
         response = requests.get(endpoint, params)
+
         return json.loads(response.text)
 
 
@@ -120,27 +120,9 @@ class Connection(object):
                 least_comment = least_comment_count
                 least_comments_video = item
 
-        sentence = ' with count of '
-
         data = {
-            'apiUnitsConsumed': self.api_units,
+            'apiUnitsConsumed': self._api_units,
             'channelInfo': channel_info['items'][0],
-            'lessVideosStats': {
-                'most': {
-                    'views': '{0}{1}{2}'.format(most_viewed_video['snippet']['title'], \
-                        videos_info[0]['statistics']['viewCount'], sentence),
-                    'likes': '{0}{1}{2}'.format(most_liked_video['snippet']['title'], most_liked, sentence),
-                    'dislikes': '{0}{1}{2}'.format(most_disliked_video['snippet']['title'], most_disliked, sentence),
-                    'comments': '{0}{1}{2}'.format(most_comments_video['snippet']['title'], most_comment, sentence)
-                },
-                'least': {
-                    'views': '{0}{1}{2}'.format(least_viewed_video['snippet']['title'], \
-                        videos_info[len(videos_info) - 1]['statistics']['viewCount'], sentence),
-                    'likes': '{0}{1}{2}'.format(least_liked_video['snippet']['title'], most_liked, sentence),
-                    'dislikes': '{0}{1}{2}'.format(least_disliked_video['snippet']['title'], most_disliked, sentence),
-                    'comments': '{0}{1}{2}'.format(least_comments_video['snippet']['title'], most_comment, sentence)
-                }
-            },
             'detailedVideosStats': {
                 'most': {
                     'views': most_viewed_video,
@@ -246,3 +228,11 @@ class Connection(object):
         videos_info = self._get_videos_info(grouped_ids)
 
         return self._group_data(videos_info, channel_info)
+
+
+    @property
+    def api_units(self):
+        """
+        Get the api_units
+        """
+        return self._api_units

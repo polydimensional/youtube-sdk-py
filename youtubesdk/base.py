@@ -2,6 +2,7 @@ import json
 import math
 
 from . import constants
+from .exceptions import InvalidKeyError, MissingParamsError, WrongParamsError
 
 import requests
 
@@ -21,6 +22,8 @@ class Connection(object):
         Few other methods:
             >>> youtube.get_channel_info(channel_id='UCp03YiAWc48Ay9Ew4Nu6_UA')
             >>> youtube.get_video_by_id(video_id='rbfOxR3OiW8')
+            >>> youtube.api_units_calculator(channel_id='UCp03YiAWc48Ay9Ew4Nu6_UA')
+            >>> print(youtube.api_units)
     """
 
     def __init__(self, api_key: str):
@@ -38,8 +41,23 @@ class Connection(object):
         params['maxResults'] = constants.MAX_RESULTS
 
         response = requests.get(endpoint, params)
+        loaded_response = json.loads(response.text)
 
-        return json.loads(response.text)
+        if response.status_code == 200:
+            if 'error' in response.text:
+                raise WrongParamsError('Some error has occured', loaded_response)
+
+            elif not 'items' in response.text:
+                raise WrongParamsError('Item not found', loaded_response)
+
+            else:
+                return loaded_response
+
+        elif response.status_code == 400:
+            raise InvalidKeyError('API key not valid', loaded_response)
+
+        else:
+            raise WrongParamsError('Unknown error has occured', response.text)
 
 
     def _search(self, channel_id: str, page_token: str=None):
@@ -155,6 +173,9 @@ class Connection(object):
             Dict with api units count.
         """
 
+        if not channel_id:
+            raise MissingParamsError(message='channel_id is required')
+
         video_count = int(self.get_channel_info(channel_id=channel_id)['items'][0]['statistics']['videoCount'])
         split_call = math.ceil(video_count / 50)
         units = {
@@ -164,7 +185,7 @@ class Connection(object):
         return units
 
 
-    def get_channel_info(self, channel_id: str):
+    def get_channel_info(self, channel_id: str=None, user_name: str=None):
         """Get channel info.
 
         Parameters:
@@ -177,8 +198,12 @@ class Connection(object):
             Dict with Channel info.
         """
 
+        if not channel_id and not user_name:
+            raise MissingParamsError(message='channel_id or user_name is required')
+
         api_params = {
             'id': channel_id,
+            'forUsername': user_name,
             'part': constants.CHANNELS_PART
         }
 
@@ -197,6 +222,9 @@ class Connection(object):
         Returns:
             Dict with Video info.
         """
+
+        if not video_id:
+            raise MissingParamsError(message='video_id is required')
 
         api_params = {
             'part': constants.VIDEOS_PART,
@@ -220,6 +248,9 @@ class Connection(object):
             Dict with Channel and Video Statistics.
         """
 
+        if not channel_id:
+            raise MissingParamsError(message='channel_id is required')
+
         channel_info = self.get_channel_info(channel_id=channel_id)
         self._search(channel_id=channel_id)
 
@@ -227,7 +258,10 @@ class Connection(object):
         grouped_ids = group_ids(self.combined_search_ids, int(constants.MAX_RESULTS))
         videos_info = self._get_videos_info(grouped_ids)
 
-        return self._group_data(videos_info, channel_info)
+        if videos_info and channel_info:
+            return self._group_data(videos_info, channel_info)
+        else:
+            return {'apiUnitsConsumed': self._api_units, 'error': 'Sufficient amount of data not found'}
 
 
     @property

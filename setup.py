@@ -12,7 +12,7 @@ setuptools.setup(
     license='MIT',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    keywords=['youtube', 'api', 'python', 'sdk'],
+    keywords=['youtube', 'api', 'python', 'sdk', 'pip'],
     url='https://github.com/polydimensional/youtube-sdk-py',
     packages=setuptools.find_packages(),
     install_requires=['requests'],

@@ -142,7 +142,7 @@ class Connection(object):
         data = {
             'apiUnitsConsumed': self._api_units,
             'channelInfo': channel_info['items'][0],
-            'detailedVideosStats': {
+            'detailedVideoStats': {
                 'most': {
                     'views': most_viewed_video,
                     'likes': most_liked_video,

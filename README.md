@@ -7,11 +7,13 @@ Python SDK for accessing Youtube APIs.
 
 * Python 3
 * Requests library
+
 `$ pip install requests`
 
 ## Installation
 
 Install from pip
+
 `$ pip install youtube-sdk-py`
 
 ## Usage
